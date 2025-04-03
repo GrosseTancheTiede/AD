@@ -1,0 +1,28 @@
+# Créer l'OU "CORE" dans Active Directory (si elle n'existe pas)
+$parentOU = "CORE"
+$domainDN = "DC=foret,DC=lan"
+
+# Vérifier si l'OU "CORE" existe déjà, sinon la créer
+$ouCore = Get-ADOrganizationalUnit -Filter {Name -eq $parentOU} -SearchBase $domainDN
+if (-not $ouCore) {
+    New-ADOrganizationalUnit -Name $parentOU -Path $domainDN -ProtectedFromAccidentalDeletion $true
+    Write-Host "L'OU 'CORE' a été créée."
+} else {
+    Write-Host "L'OU 'CORE' existe déjà."
+}
+
+# Créer l'OU "HUMANS" sous "CORE" dans Active Directory (si elle n'existe pas)
+$childOU = "HUMANS"
+$ouHumansPath = "OU=$parentOU,$domainDN"
+
+# Vérifier si l'OU "HUMANS" existe déjà, sinon la créer
+$ouHumans = Get-ADOrganizationalUnit -Filter {Name -eq $childOU} -SearchBase $ouHumansPath
+if (-not $ouHumans) {
+    New-ADOrganizationalUnit -Name $childOU -Path $ouHumansPath -ProtectedFromAccidentalDeletion $true
+    Write-Host "L'OU 'HUMANS' a été créée sous 'CORE'."
+} else {
+    Write-Host "L'OU 'HUMANS' existe déjà sous 'CORE'."
+}
+
+# Vérifier la création des OUs
+Get-ADOrganizationalUnit -Filter * -SearchBase $domainDN | Format-Table Name, DistinguishedName
