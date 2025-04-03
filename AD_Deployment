@@ -1,0 +1,37 @@
+# Script pour déployer un AD 2022 avec l'adresse IP fixée et les paramètres spécifiés
+
+# Vérifier et obtenir l'alias de l'interface réseau
+Get-NetAdapter
+
+# Définir l'adresse IP de l'interface réseau (modifiez l'alias de l'interface en fonction de votre sortie de Get-NetAdapter)
+$interfaceAlias = "Ethernet0"  # Remplacez par le nom exact de votre interface réseau trouvé avec Get-NetAdapter
+$ipAddress = "192.168.1.10"
+$subnetMask = "255.255.255.0"
+$gateway = "192.168.1.50"  # Remplacez par l'adresse de votre passerelle
+$dnsServer = "192.168.1.50"  # Remplacez par l'adresse de votre serveur DNS (si différent)
+
+# Configurer l'adresse IP statique
+New-NetIPAddress -InterfaceAlias $interfaceAlias -IPAddress $ipAddress -PrefixLength 24 -DefaultGateway $gateway
+
+# Configurer le serveur DNS
+Set-DNSClientServerAddress -InterfaceAlias $interfaceAlias -ServerAddresses $dnsServer
+
+# Vérifier la configuration de l'IP
+Get-NetIPAddress -InterfaceAlias $interfaceAlias
+
+# Vérifier la configuration du serveur DNS
+Get-DNSClientServerAddress -InterfaceAlias $interfaceAlias
+
+# Installation du rôle Active Directory Domain Services
+Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+
+# Promotion du serveur en contrôleur de domaine
+$domainName = "foret.lan"
+$forestName = "foret"
+$adminPassword = ConvertTo-SecureString -String "Tech!20242025" -AsPlainText -Force  # Nouveau mot de passe administrateur
+
+# Créer une nouvelle forêt et domaine
+Install-ADDSForest -DomainName $domainName -DomainNetbiosName $forestName -SafeModeAdministratorPassword $adminPassword -Force -NoRebootOnCompletion
+
+# Redémarrer le serveur pour appliquer les modifications
+Restart-Computer
