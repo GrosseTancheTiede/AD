@@ -1,0 +1,75 @@
+# Définir le chemin des fichiers CSV
+$usersCSVPath = "C:\Users\Administrateur\Documents\Liste_Users.csv"
+$adminsCSVPath = "C:\Users\Administrateur\Documents\Liste_Admins.csv"
+
+# Définir l'OU "HUMANS" et "CORE"
+$domainDN = "DC=foret,DC=lan"
+$parentOU = "CORE"
+$humansOU = "HUMANS"
+$usersOU = "USERS"
+$adminsOU = "ADMINS"
+
+# Créer l'OU "USERS" sous "HUMANS" si elle n'existe pas
+$usersOUPath = "OU=$usersOU,OU=$humansOU,OU=$parentOU,$domainDN"
+if (-not (Get-ADOrganizationalUnit -Filter {Name -eq $usersOU} -SearchBase "OU=$humansOU,OU=$parentOU,$domainDN")) {
+    New-ADOrganizationalUnit -Name $usersOU -Path "OU=$humansOU,OU=$parentOU,$domainDN" -ProtectedFromAccidentalDeletion $true
+    Write-Host "L'OU 'USERS' a été créée sous 'HUMANS'."
+} else {
+    Write-Host "L'OU 'USERS' existe déjà sous 'HUMANS'."
+}
+
+# Créer l'OU "ADMINS" sous "HUMANS" si elle n'existe pas
+$adminsOUPath = "OU=$adminsOU,OU=$humansOU,OU=$parentOU,$domainDN"
+if (-not (Get-ADOrganizationalUnit -Filter {Name -eq $adminsOU} -SearchBase "OU=$humansOU,OU=$parentOU,$domainDN")) {
+    New-ADOrganizationalUnit -Name $adminsOU -Path "OU=$humansOU,OU=$parentOU,$domainDN" -ProtectedFromAccidentalDeletion $true
+    Write-Host "L'OU 'ADMINS' a été créée sous 'HUMANS'."
+} else {
+    Write-Host "L'OU 'ADMINS' existe déjà sous 'HUMANS'."
+}
+
+# Fonction pour créer un utilisateur à partir des informations CSV
+function Create-UserFromCSV {
+    param (
+        [string]$firstName,
+        [string]$lastName,
+        [string]$password,
+        [string]$ouPath
+    )
+    
+    $username = "$firstName.$lastName"
+    
+    # Créer le compte utilisateur
+    New-ADUser -SamAccountName $username `
+               -UserPrincipalName "$username@$domainDN" `
+               -Name "$firstName $lastName" `
+               -GivenName $firstName `
+               -Surname $lastName `
+               -DisplayName "$firstName $lastName" `
+               -Path $ouPath `
+               -AccountPassword (ConvertTo-SecureString -String $password -AsPlainText -Force) `
+               -Enabled $true `
+               -PassThru `
+               -ChangePasswordAtLogon $false
+
+    Write-Host "Utilisateur $username créé dans l'OU $ouPath."
+}
+
+# Importer et créer les utilisateurs de Liste_Users.csv dans l'OU "USERS"
+if (Test-Path $usersCSVPath) {
+    $users = Import-Csv -Path $usersCSVPath
+    foreach ($user in $users) {
+        Create-UserFromCSV -firstName $user.first_name -lastName $user.last_name -password $user.password -ouPath $usersOUPath
+    }
+} else {
+    Write-Host "Le fichier $usersCSVPath n'a pas été trouvé."
+}
+
+# Importer et créer les utilisateurs de Liste_Admins.csv dans l'OU "ADMINS"
+if (Test-Path $adminsCSVPath) {
+    $admins = Import-Csv -Path $adminsCSVPath
+    foreach ($admin in $admins) {
+        Create-UserFromCSV -firstName $admin.first_name -lastName $admin.last_name -password $admin.password -ouPath $adminsOUPath
+    }
+} else {
+    Write-Host "Le fichier $adminsCSVPath n'a pas été trouvé."
+}
