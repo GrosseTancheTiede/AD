@@ -1,5 +1,4 @@
 README pour un développeur expérimenté
-Introduction
 
 Ce script PowerShell permet de configurer un serveur Windows 2022, de déployer Active Directory (AD), puis de gérer des utilisateurs dans des unités organisationnelles (OU) spécifiques. Il automatise la configuration réseau, l'installation du rôle AD DS, la création d'une forêt et d'un domaine, ainsi que l'importation d'utilisateurs depuis des fichiers CSV dans des OUs.
 Déploiement d'Active Directory
@@ -43,7 +42,6 @@ Exécution du script
 
 
 README pour un utilisateur débutant
-Introduction
 
 Ce script permet de configurer un serveur Windows en tant que contrôleur de domaine avec Active Directory (AD) et de créer des utilisateurs dans des groupes spécifiques. Il facilite l'automatisation de la configuration réseau, de l'installation d'Active Directory et de l'importation d'utilisateurs depuis des fichiers CSV.
 Étapes principales :
